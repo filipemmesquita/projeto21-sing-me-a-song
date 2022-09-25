@@ -51,10 +51,13 @@ describe('Testing GET/recommendations',()=>{
         }
         
         const {body:result}=await supertest(app).get('/recommendations');
-        console.log(result);
 
         expect(result.length).toBe(10);
         expect(result[0]).toMatchObject(recList[10]);
         expect(result[9]).toMatchObject(recList[1]);
+    })
+    it('Should return empty array when empty',async()=>{
+        const{body:result}=await supertest(app).get('/recommendations');
+        expect(result.length).toBe(0);
     })
 })
