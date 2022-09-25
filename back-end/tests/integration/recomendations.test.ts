@@ -11,10 +11,10 @@ afterAll(async()=>{
 });
 describe('Testing POST/',()=>{
     it('Should return 201 if request is successful',async()=>{
-        const newRec=await recommendationFactory();
+        const newRec = await recommendationFactory();
 
-        const result=await supertest(app).post('/recommendations').send(newRec);
-        
+        const result = await supertest(app).post('/recommendations').send(newRec);
+
         expect(result.status).toBe(201);
     })
     it('Should return 422 if request body has an invalid format',async()=>{
@@ -26,10 +26,17 @@ describe('Testing POST/',()=>{
             youtubeLink:"https://www.youtube.com/watch?v=zhIScvlFn2w"
         }
 
-        const result1=await supertest(app).post('/recommendations').send(wrongRecomendation1);
-        const result2=await supertest(app).post('/recommendations').send(wrongRecomendation2);
+        const result1 = await supertest(app).post('/recommendations').send(wrongRecomendation1);
+        const result2 = await supertest(app).post('/recommendations').send(wrongRecomendation2);
         expect(result1.status).toBe(422);
         expect(result2.status).toBe(422);
     });
-    it.todo('Should return 409 if recomendation name is not unique')
+    it('Should return 409 if recomendation name is not unique',async()=>{
+        const newRec = await recommendationFactory();
+        
+        await supertest(app).post('/recommendations').send(newRec);
+        const result = await supertest(app).post('/recommendations').send(newRec);
+        
+        expect(result.status).toBe(409);
+    })
 })
