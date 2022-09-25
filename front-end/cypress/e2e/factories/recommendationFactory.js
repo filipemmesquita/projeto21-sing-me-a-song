@@ -20,5 +20,6 @@ export default async function recommendationFactory(){
         name:faker.lorem.words(3),
         youtubeLink:youtubelinks[linksIndex]
     }
+    
     return newRec;
 }
