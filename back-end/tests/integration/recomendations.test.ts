@@ -9,7 +9,7 @@ beforeEach(async()=>{
 afterAll(async()=>{
     await prisma.$disconnect();
 });
-describe('Testing POST/',()=>{
+describe('Testing POST/recommendations/',()=>{
     it('Should return 201 if request is successful',async()=>{
         const newRec = await recommendationFactory();
 
@@ -38,5 +38,23 @@ describe('Testing POST/',()=>{
         const result = await supertest(app).post('/recommendations').send(newRec);
         
         expect(result.status).toBe(409);
+    })
+})
+describe('Testing GET/recommendations',()=>{
+    it('Should return the newest 10 recomendations',async()=>{
+        const recList=[];
+        for(let x=0;x<11;x++){
+            recList[x]=await recommendationFactory();
+        }
+        for(let x=0;x<11;x++){
+            await supertest(app).post('/recommendations').send(recList[x]);
+        }
+        
+        const {body:result}=await supertest(app).get('/recommendations');
+        console.log(result);
+
+        expect(result.length).toBe(10);
+        expect(result[0]).toMatchObject(recList[10]);
+        expect(result[9]).toMatchObject(recList[1]);
     })
 })
