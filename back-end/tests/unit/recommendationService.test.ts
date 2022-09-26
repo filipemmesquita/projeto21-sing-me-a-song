@@ -347,4 +347,30 @@ describe("Unit testing getRandom", () => {
       type: "not_found",
     });
   });
+  it("Should return a random recommendation", async () => {
+    const mockArray = [];
+    for (let x = 0; x < 10; x++) {
+      const newRec = await recommendationFactory.newRecommendation();
+      mockArray[x] = {
+        id: faker.datatype.number(),
+        score: faker.datatype.number(),
+        name: newRec.name,
+        youtubeLink: newRec.youtubeLink,
+      };
+    }
+
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue(mockArray);
+
+    jest
+      .spyOn(Math, "random")
+      .mockReturnValue(faker.datatype.float({ min: 0, max: 1 }));
+
+    jest.spyOn(Math, "floor").mockReturnValue(5);
+
+    const result = await recommendationService.getRandom();
+
+    expect(result).toEqual(mockArray[5]);
+  });
 });
