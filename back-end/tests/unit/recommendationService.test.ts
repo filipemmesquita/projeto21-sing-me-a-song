@@ -60,3 +60,49 @@ describe("Unit testing insert", () => {
     });
   });
 });
+describe("Unit testing upvote", () => {
+  it("Should get a recommendation by id", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    const spy = jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number(),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    jest
+      .spyOn(recommendationRepository, "updateScore")
+      .mockResolvedValue(undefined);
+
+    await recommendationService.upvote(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId);
+  });
+
+  it("Should call increment with correct values", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number(),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    const spy = jest
+      .spyOn(recommendationRepository, "updateScore")
+      .mockResolvedValue({
+        id: newRecId,
+        score: faker.datatype.number(),
+        name: newRec.name,
+        youtubeLink: newRec.youtubeLink,
+      });
+
+    await recommendationService.upvote(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId, "increment");
+  });
+});
