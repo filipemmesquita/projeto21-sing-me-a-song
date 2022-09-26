@@ -2,7 +2,6 @@ import { recommendationRepository } from "../../src/repositories/recommendationR
 import { recommendationService } from "../../src/services/recommendationsService";
 import { faker } from "@faker-js/faker";
 import { jest } from "@jest/globals";
-import { conflictError, notFoundError } from "../../src/utils/errorUtils";
 import * as recommendationFactory from "../factories/recommendationFactory";
 
 beforeEach(() => {
@@ -47,7 +46,7 @@ describe("Unit testing insert", () => {
 
     jest.spyOn(recommendationRepository, "findByName").mockResolvedValue({
       id: faker.datatype.number(),
-      score: faker.datatype.number(),
+      score: faker.datatype.number({ min: -4 }),
       name: body.name,
       youtubeLink: body.youtubeLink,
     });
@@ -67,7 +66,7 @@ describe("Unit testing upvote", () => {
 
     const spy = jest.spyOn(recommendationRepository, "find").mockResolvedValue({
       id: newRecId,
-      score: faker.datatype.number(),
+      score: faker.datatype.number({ min: -4 }),
       name: newRec.name,
       youtubeLink: newRec.youtubeLink,
     });
@@ -81,13 +80,13 @@ describe("Unit testing upvote", () => {
     expect(spy).toHaveBeenCalledWith(newRecId);
   });
 
-  it("Should call increment with correct values", async () => {
+  it("Should call updateScore with increment", async () => {
     const newRecId = faker.datatype.number();
     const newRec = await recommendationFactory.newRecommendation();
 
     jest.spyOn(recommendationRepository, "find").mockResolvedValue({
       id: newRecId,
-      score: faker.datatype.number(),
+      score: faker.datatype.number({ min: -4 }),
       name: newRec.name,
       youtubeLink: newRec.youtubeLink,
     });
@@ -96,7 +95,7 @@ describe("Unit testing upvote", () => {
       .spyOn(recommendationRepository, "updateScore")
       .mockResolvedValue({
         id: newRecId,
-        score: faker.datatype.number(),
+        score: faker.datatype.number({ min: -4 }),
         name: newRec.name,
         youtubeLink: newRec.youtubeLink,
       });
@@ -104,5 +103,77 @@ describe("Unit testing upvote", () => {
     await recommendationService.upvote(newRecId);
 
     expect(spy).toHaveBeenCalledWith(newRecId, "increment");
+  });
+});
+describe("Unit testing downvote", () => {
+  it("Should call find from repository with correct params", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number({ min: -4 }),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    jest.spyOn(recommendationRepository, "updateScore").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number({ min: -4 }),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    await recommendationService.downvote(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId);
+  });
+  it("Should call updateScore with decrement", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number({ min: -4 }),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    const spy = jest
+      .spyOn(recommendationRepository, "updateScore")
+      .mockResolvedValue({
+        id: newRecId,
+        score: faker.datatype.number({ min: -4 }),
+        name: newRec.name,
+        youtubeLink: newRec.youtubeLink,
+      });
+    await recommendationService.downvote(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId, "decrement");
+  });
+  it("Should call delete when score is lowered to -5", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number({ min: -4 }),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    jest.spyOn(recommendationRepository, "updateScore").mockResolvedValue({
+      id: newRecId,
+      score: -6,
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+
+    const spy = jest
+      .spyOn(recommendationRepository, "remove")
+      .mockResolvedValue(undefined);
+
+    await recommendationService.downvote(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId);
   });
 });
