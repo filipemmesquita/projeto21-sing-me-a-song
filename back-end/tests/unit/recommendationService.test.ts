@@ -219,3 +219,33 @@ describe("Unit testing getTop", () => {
     expect(spy).toHaveBeenCalledWith(amount);
   });
 });
+describe("Unit testing getById", () => {
+  it("Should call find with correct values", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    const spy = jest.spyOn(recommendationRepository, "find").mockResolvedValue({
+      id: newRecId,
+      score: faker.datatype.number(),
+      name: newRec.name,
+      youtubeLink: newRec.youtubeLink,
+    });
+    await recommendationService.getById(newRecId);
+
+    expect(spy).toHaveBeenCalledWith(newRecId);
+  });
+  it("Should throw an error when a recommendation does not exist", async () => {
+    const newRecId = faker.datatype.number();
+    const newRec = await recommendationFactory.newRecommendation();
+
+    const spy = jest
+      .spyOn(recommendationRepository, "find")
+      .mockResolvedValue(undefined);
+
+    const result = recommendationService.getById(newRecId);
+
+    expect(result).rejects.toMatchObject({
+      type: "not_found",
+    });
+  });
+});
