@@ -90,7 +90,7 @@ describe("Testing route POST/recommendations/:id/upvote", () => {
     expect(scoreCheck2).toBe(2);
   });
   it("Should return 404 if recommendation does not exist", async () => {
-    const randomNumber = Math.random();
+    const randomNumber = recommendationFactory.getRandomInt(1, 1000);
 
     const result = await supertest(app).post(
       `recommendations/${randomNumber}/upvote`
@@ -124,11 +124,38 @@ describe("Testing route POST/recommendations/:id/downvote", () => {
     expect(scoreCheck2).toBe(-2);
   });
   it("Should return 404 if recommendation does not exist", async () => {
-    const randomNumber = Math.random();
+    const randomNumber = recommendationFactory.getRandomInt(1, 1000);
 
     const result = await supertest(app).post(
       `recommendations/${randomNumber}/downvote`
     );
+
+    expect(result.status).toBe(404);
+  });
+});
+describe("Testing route GET/recommendations/:id", () => {
+  it("should return status 200 if successful", async () => {
+    const createdRec = await recommendationFactory.registerNewRecommendation();
+
+    const result = await supertest(app).get(
+      `/recommendations/${createdRec.id}`
+    );
+
+    expect(result.status).toBe(200);
+  });
+  it("Should return the recommendation with specified ID", async () => {
+    const createdRec = await recommendationFactory.registerNewRecommendation();
+
+    const result = await supertest(app).get(
+      `/recommendations/${createdRec.id}`
+    );
+
+    expect(result.body).toMatchObject(createdRec);
+  });
+  it("Should return status 404 if recommendation does not exist", async () => {
+    const randomNumber = recommendationFactory.getRandomInt(1, 1000);
+
+    const result = await supertest(app).get(`/recommendations/${randomNumber}`);
 
     expect(result.status).toBe(404);
   });
