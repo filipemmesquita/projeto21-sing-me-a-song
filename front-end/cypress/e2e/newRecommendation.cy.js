@@ -1,8 +1,7 @@
 import {faker} from '@faker-js/faker'
 import recommendationFactory from './factories/recommendationFactory.js'
-
 beforeEach(async () => {
-    await cy.request('POST', 'http://localhost:4001/test/reset', {});
+    await cy.request('POST', `${Cypress.env('baseURL')}/test/reset`, {});
   });
 
 describe('Tests route POST/recommendations',()=>{
