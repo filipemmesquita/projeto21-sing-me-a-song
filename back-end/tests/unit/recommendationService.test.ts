@@ -46,7 +46,7 @@ describe("Unit testing insert", () => {
 
     jest.spyOn(recommendationRepository, "findByName").mockResolvedValue({
       id: faker.datatype.number(),
-      score: faker.datatype.number({ min: -4 }),
+      score: faker.datatype.number(),
       name: body.name,
       youtubeLink: body.youtubeLink,
     });
@@ -66,7 +66,7 @@ describe("Unit testing upvote", () => {
 
     const spy = jest.spyOn(recommendationRepository, "find").mockResolvedValue({
       id: newRecId,
-      score: faker.datatype.number({ min: -4 }),
+      score: faker.datatype.number(),
       name: newRec.name,
       youtubeLink: newRec.youtubeLink,
     });
@@ -86,7 +86,7 @@ describe("Unit testing upvote", () => {
 
     jest.spyOn(recommendationRepository, "find").mockResolvedValue({
       id: newRecId,
-      score: faker.datatype.number({ min: -4 }),
+      score: faker.datatype.number(),
       name: newRec.name,
       youtubeLink: newRec.youtubeLink,
     });
@@ -95,7 +95,7 @@ describe("Unit testing upvote", () => {
       .spyOn(recommendationRepository, "updateScore")
       .mockResolvedValue({
         id: newRecId,
-        score: faker.datatype.number({ min: -4 }),
+        score: faker.datatype.number(),
         name: newRec.name,
         youtubeLink: newRec.youtubeLink,
       });
@@ -156,7 +156,7 @@ describe("Unit testing downvote", () => {
 
     jest.spyOn(recommendationRepository, "find").mockResolvedValue({
       id: newRecId,
-      score: faker.datatype.number({ min: -4 }),
+      score: -5,
       name: newRec.name,
       youtubeLink: newRec.youtubeLink,
     });
@@ -236,13 +236,112 @@ describe("Unit testing getById", () => {
   });
   it("Should throw an error when a recommendation does not exist", async () => {
     const newRecId = faker.datatype.number();
-    const newRec = await recommendationFactory.newRecommendation();
 
     const spy = jest
       .spyOn(recommendationRepository, "find")
       .mockResolvedValue(undefined);
 
     const result = recommendationService.getById(newRecId);
+
+    expect(result).rejects.toMatchObject({
+      type: "not_found",
+    });
+  });
+});
+describe("Unit testing getRandom", () => {
+  it("Should call findAll with gt as scoreFilter when math.random() returns less than 0.7", async () => {
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue([
+        {
+          id: faker.datatype.number(),
+          score: faker.datatype.number(),
+          name: newRec.name,
+          youtubeLink: newRec.youtubeLink,
+        },
+      ]);
+    jest.spyOn(Math, "random").mockReturnValue(0.1);
+
+    await recommendationService.getRandom();
+
+    expect(spy).toHaveBeenCalledWith({ score: 10, scoreFilter: "gt" });
+  });
+  it("Should call findAll with lte as scoreFilter when math.random() returns more than 0.7", async () => {
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue([
+        {
+          id: faker.datatype.number(),
+          score: faker.datatype.number({ min: -5 }),
+          name: newRec.name,
+          youtubeLink: newRec.youtubeLink,
+        },
+      ]);
+
+    jest.spyOn(Math, "random").mockReturnValue(0.9);
+
+    await recommendationService.getRandom();
+
+    expect(spy).toHaveBeenCalledWith({ score: 10, scoreFilter: "lte" });
+  });
+  it("Should call findAll with correct params", async () => {
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue([
+        {
+          id: faker.datatype.number(),
+          score: faker.datatype.number(),
+          name: newRec.name,
+          youtubeLink: newRec.youtubeLink,
+        },
+      ]);
+
+    jest
+      .spyOn(Math, "random")
+      .mockReturnValue(faker.datatype.float({ min: 0, max: 1 }));
+
+    await recommendationService.getRandom();
+
+    expect(spy).toHaveBeenCalledWith({
+      score: 10,
+      scoreFilter: expect.any(String),
+    });
+  });
+  it("Should call findAll two times when doesn't exists any recommendation with score bigger than 10", async () => {
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: faker.datatype.number(),
+          score: faker.datatype.number({ max: 9 }),
+          name: newRec.name,
+          youtubeLink: newRec.youtubeLink,
+        },
+      ]);
+
+    jest
+      .spyOn(Math, "random")
+      .mockReturnValue(faker.datatype.float({ min: 0, max: 1 }));
+
+    await recommendationService.getRandom();
+
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+  it("should throw notFoundError when doesn't exists any recommendation", async () => {
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue([]);
+
+    jest
+      .spyOn(Math, "random")
+      .mockReturnValue(faker.datatype.float({ min: 0, max: 1 }));
+
+    const result = recommendationService.getRandom();
 
     expect(result).rejects.toMatchObject({
       type: "not_found",
