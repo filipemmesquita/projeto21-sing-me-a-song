@@ -177,3 +177,45 @@ describe("Unit testing downvote", () => {
     expect(spy).toHaveBeenCalledWith(newRecId);
   });
 });
+describe("Unit testing get", () => {
+  it("Should call all corresponding recommendations", async () => {
+    const newRec = await recommendationFactory.newRecommendation();
+    const spy = jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockResolvedValue([
+        {
+          id: faker.datatype.number(),
+          score: faker.datatype.number(),
+          name: newRec.name,
+          youtubeLink: newRec.youtubeLink,
+        },
+      ]);
+
+    await recommendationService.get();
+
+    expect(spy).toHaveBeenCalled();
+  });
+});
+describe("Unit testing getTop", () => {
+  it("Should call getAmountByScore with correct params", async () => {
+    const amount = faker.datatype.number({ min: 1, max: 10 });
+    const mockArray = [];
+    for (let x = 0; x < amount; x++) {
+      const newRec = await recommendationFactory.newRecommendation();
+      mockArray[x] = {
+        id: faker.datatype.number(),
+        score: faker.datatype.number(),
+        name: newRec.name,
+        youtubeLink: newRec.youtubeLink,
+      };
+    }
+
+    const spy = jest
+      .spyOn(recommendationRepository, "getAmountByScore")
+      .mockResolvedValue(mockArray);
+
+    await recommendationService.getTop(amount);
+
+    expect(spy).toHaveBeenCalledWith(amount);
+  });
+});
