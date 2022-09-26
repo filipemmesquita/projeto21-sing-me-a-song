@@ -39,8 +39,16 @@ export async function checkRecommendation(id: number) {
   });
   return recomendation;
 }
-export function getRandomInt(min, max) {
+export function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
+}
+export async function setScore(id: number, score: number) {
+  const createdRec = await prisma.recommendation.update({
+    where: { id },
+    data: { score },
+  });
+
+  return createdRec;
 }

@@ -166,7 +166,6 @@ describe("Testing route GET/recommendations/random", () => {
 
     const result = await supertest(app).get(`/recommendations/random`);
 
-    console.log(result.error);
     expect(result.status).toBe(200);
   });
   it("Should return 404 if no recommendations exist", async () => {
@@ -191,5 +190,67 @@ describe("Testing route GET/recommendations/random", () => {
       comparisons[x] = result[3].id !== result[x].id;
     }
     expect(comparisons).toContain(true);
+  });
+});
+describe("Testing route GET/recommendations/top:amount", () => {
+  it("Should return 200 when successfull", async () => {
+    const randomNumber = recommendationFactory.getRandomInt(1, 10);
+
+    const result = await supertest(app).get(
+      `/recommendations/top/${randomNumber}`
+    );
+
+    expect(result.status).toBe(200);
+  });
+  it("Should return the top recommendations", async () => {
+    const numberOfRecs = recommendationFactory.getRandomInt(1, 10);
+    const top3Index = [];
+    top3Index[0] = recommendationFactory.getRandomInt(1, 10);
+    top3Index[1] = recommendationFactory.getRandomInt(1, 10);
+    while (top3Index[0] === top3Index[1]) {
+      top3Index[1] = recommendationFactory.getRandomInt(1, 10);
+    }
+    top3Index[2] = recommendationFactory.getRandomInt(1, 10);
+    while (top3Index[0] === top3Index[2] || top3Index[1] === top3Index[2]) {
+      top3Index[2] = recommendationFactory.getRandomInt(1, 10);
+    }
+    const createdRecsList = [];
+    for (let x = 0; x < 10; x++) {
+      const createdRec =
+        await recommendationFactory.registerNewRecommendation();
+      createdRecsList[x] = createdRec;
+    }
+    const top3Rec = [];
+    for (let x = 0; x < 3; x++) {
+      top3Rec[x] = createdRecsList[top3Index[x]];
+    }
+
+    await recommendationFactory.setScore(top3Rec[0].id, 10);
+    await recommendationFactory.setScore(top3Rec[1].id, 5);
+    await recommendationFactory.setScore(top3Rec[2].id, 2);
+    for (let x = 0; x < 3; x++) {
+      top3Rec[x] = await recommendationFactory.checkRecommendation(
+        top3Rec[x].id
+      );
+    }
+
+    const { body: result } = await supertest(app).get(
+      `/recommendations/top/${numberOfRecs}`
+    );
+
+    expect(result[0]).toMatchObject(top3Rec[0]);
+    expect(result[1]).toMatchObject(top3Rec[1]);
+    expect(result[2]).toMatchObject(top3Rec[2]);
+  });
+  it("Should return a specified amount of recommendations", async () => {
+    const randomNumber = recommendationFactory.getRandomInt(1, 5);
+    for (let x = 0; x < 11; x++) {
+      await recommendationFactory.registerNewRecommendation();
+    }
+
+    const { body: result } = await supertest(app).get(
+      `/recommendations/top/${randomNumber}`
+    );
+    expect(result.length).toBe(randomNumber);
   });
 });
