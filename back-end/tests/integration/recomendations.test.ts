@@ -160,3 +160,36 @@ describe("Testing route GET/recommendations/:id", () => {
     expect(result.status).toBe(404);
   });
 });
+describe("Testing route GET/recommendations/random", () => {
+  it("Should return 200 if successfull", async () => {
+    await recommendationFactory.registerNewRecommendation();
+
+    const result = await supertest(app).get(`/recommendations/random`);
+
+    console.log(result.error);
+    expect(result.status).toBe(200);
+  });
+  it("Should return 404 if no recommendations exist", async () => {
+    const result = await supertest(app).get(`/recommendations/random`);
+
+    expect(result.status).toBe(404);
+  });
+  it("Should return a valid, random recommendation", async () => {
+    for (let x = 0; x < 10; x++) {
+      await recommendationFactory.registerNewRecommendation();
+    }
+
+    const result = [];
+    for (let x = 0; x < 4; x++) {
+      const { body: entry } = await supertest(app).get(
+        `/recommendations/random`
+      );
+      result[x] = entry;
+    }
+    const comparisons = [];
+    for (let x = 0; x < 3; x++) {
+      comparisons[x] = result[3].id !== result[x].id;
+    }
+    expect(comparisons).toContain(true);
+  });
+});
